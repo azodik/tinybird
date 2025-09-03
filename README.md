@@ -128,3 +128,12 @@ curl --location '{TB_URL}/v0/pipes/count_audit_logs_by_action.json?tenant_id=faf
 curl --location '{TB_URL}/v0/pipes/count_mau_users.json?start=2025-08-01&end=2025-08-31&tenant_id=faf304f42350c0ba1236f5ccdefbea59' \
 --header 'Authorization: Bearer {TB_TOKEN}'
 ```
+
+
+# Open API Specs
+
+https://azodik.github.io/tinybird/openapi.yaml
+
+
+# See docs
+https://azodik.github.io/tinybird
