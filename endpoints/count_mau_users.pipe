@@ -1,0 +1,18 @@
+DESCRIPTION >
+    Count active users (distinct actor_ids) who either signed up or logged in
+
+NODE active_users
+SQL >
+    %
+    SELECT
+        count(DISTINCT actor_id) AS active_users
+    FROM audit_logs
+    WHERE
+        tenant_id = {{ String(tenant_id) }}
+        {% if defined(start) and defined(end) %}
+            AND timestamp >= toDateTime({{ String(start) }} || ' 00:00:00')
+            AND timestamp <  toDateTime({{ String(end) }} || ' 23:59:59')
+        {% end %}
+        AND action IN ('USER_LOGIN','USER_SIGNUP')
+
+TYPE endpoint

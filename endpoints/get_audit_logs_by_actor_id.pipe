@@ -1,0 +1,50 @@
+DESCRIPTION >
+    Get audit log by tenant_id and optional filters
+
+NODE endpoint
+SQL >
+
+    %
+        SELECT
+            id,
+            timestamp,
+            action,
+            actor_id,
+            actor_type,
+            actor_name,
+            targets,
+            description,
+            ip_address,
+            user_agent,
+            tenant_id,
+            app_id,
+            product_slug,
+            meta_data
+        FROM audit_logs
+        WHERE
+            actor_id = {{ String(actor_id) }}
+            {% if defined(start) and defined(end) %}
+                AND timestamp >= toDateTime({{ String(start) }} || ' 00:00:00')
+                AND timestamp <  toDateTime({{ String(end) }} || ' 23:59:59')
+            {% end %}
+            {% if defined(tenant_id) %} AND tenant_id = {{ String(tenant_id) }} {% end %}
+            {% if defined(app_id) %} AND app_id = {{ String(app_id) }} {% end %}
+            {% if defined(product_slug) %} AND product_slug = {{ String(product_slug) }} {% end %}
+            {% if defined(action) %}
+                AND action IN (
+                    SELECT arrayJoin(splitByChar(',', {{ String(action) }}))
+                )
+            {% end %}
+         ORDER BY timestamp DESC
+         LIMIT {% if defined(limit) %} {{ Int(limit) }} {% else %} 10 {% end %}
+         OFFSET {% if defined(page) %}
+                    {% if defined(limit) %} {{ (Int(page) - 1) * Int(limit) }} {% else %} {{ (Int(page) - 1) * 10 }} {% end %}
+                {% elif defined(offset) %}
+                    {{ Int(offset) }}
+                {% else %}
+                    0
+                {% end %}
+
+TYPE endpoint
+
+

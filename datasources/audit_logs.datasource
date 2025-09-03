@@ -1,0 +1,21 @@
+
+SCHEMA >
+    `id` String `json:$.id`,
+    `timestamp` DateTime64(3) `json:$.timestamp`,
+    `tenant_id` String `json:$.tenant_id`,
+    `app_id` String `json:$.app_id`,
+    `product_slug` String `json:$.product_slug`,
+    `action` LowCardinality(String) `json:$.action`,
+    `actor_id` String `json:$.actor_id`,
+    `actor_type` LowCardinality(String) `json:$.actor_type`,
+    `actor_name` String `json:$.actor_name`,
+    `targets` String `json:$.targets`,
+    `description` String `json:$.description`,
+    `ip_address` String `json:$.ip_address`,
+    `user_agent` String `json:$.user_agent`,
+    `meta_data` String `json:$.meta_data`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(timestamp)"
+ENGINE_SORTING_KEY "tenant_id,app_id, product_slug, timestamp"
+ENGINE_TTL "toDateTime(timestamp) + toIntervalYear(1)"

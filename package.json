@@ -1,0 +1,29 @@
+{
+  "name": "@azodik/tinybird",
+  "version": "0.0.1",
+  "description": "Tinybird project for Azodik",
+  "scripts": {
+    "info": "tb info",
+    "list": "tb list",
+    "start": "tb local start",
+    "stop": "tb local stop",
+    "login:us": "tb login --host https://api.us-east.aws.tinybird.co",
+    "login:eu": "tb login --host https://api.eu-west-1.aws.tinybird.co",
+    "logout:local": "tb logout",
+    "deploy:local": "tb deploy",
+    "deploy:cloud": "tb --cloud deploy",
+    "fixture:generate": "tb mock audit_logs --rows=1000",
+    "fixture:apply": "tb datasource append audit_logs --file fixtures/audit_logs.ndjson",
+    "deploy:local:force": "tb deploy --allow-destructive-operations",
+    "deploy:cloud:force": "tb deploy --cloud --allow-destructive-operations",
+    "tb:update": "tb update"
+  },
+  "keywords": [
+    "tinybird",
+    "audit",
+    "logs"
+  ],
+  "author": "Jai sharma <jai@azodik.com>",
+  "license": "MIT",
+  "packageManager": "pnpm@10.15.0"
+}

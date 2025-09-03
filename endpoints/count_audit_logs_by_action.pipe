@@ -1,0 +1,28 @@
+DESCRIPTION >
+    Count audit logs grouped by action with filtering options
+
+NODE count_by_action
+SQL >
+    %
+    SELECT
+        action,
+        count() AS count
+    FROM audit_logs
+    WHERE
+        tenant_id = {{ String(tenant_id) }}
+        {% if defined(start) and defined(end) %}
+            AND timestamp >= toDateTime({{ String(start) }} || ' 00:00:00')
+            AND timestamp <  toDateTime({{ String(end) }} || ' 23:59:59')
+        {% end %}
+         {% if defined(action) %}
+            AND action IN (
+                SELECT arrayJoin(splitByChar(',', {{ String(action) }}))
+            )
+        {% end %}
+        {% if defined(app_id) %} AND app_id = {{ String(app_id) }} {% end %}
+        {% if defined(product_slug) %} AND product_slug = {{ String(product_slug) }} {% end %}
+        {% if defined(actor_id) %} AND actor_id = {{ String(actor_id) }} {% end %}
+    GROUP BY action
+    ORDER BY count DESC
+
+TYPE endpoint

@@ -1,0 +1,47 @@
+DESCRIPTION >
+    Get raw audit logs with optional filters
+
+NODE endpoint
+SQL >
+
+    %
+        SELECT
+            id,
+            timestamp,
+            action,
+            actor_id,
+            actor_type,
+            actor_name,
+            targets,
+            description,
+            ip_address,
+            user_agent,
+            tenant_id,
+            app_id,
+            product_slug,
+            meta_data
+        FROM audit_logs
+        WHERE
+            true
+            {% if defined(start) and defined(end) %}
+                AND timestamp >= {{ DateTime(start, '2024-06-01 00:00:00') }}
+                AND timestamp < {{ DateTime(end, '2024-06-07 00:00:00') }}
+            {% end %}
+            {% if defined(tenant_id) %} AND tenant_id = {{ String(tenant_id) }} {% end %}
+            {% if defined(app_id) %} AND app_id = {{ String(app_id) }} {% end %}
+            {% if defined(product_slug) %} AND product_slug = {{ String(product_slug) }} {% end %}
+            {% if defined(actor_id) %} AND actor_id = {{ String(actor_id) }} {% end %}
+
+         ORDER BY timestamp DESC
+         LIMIT {% if defined(limit) %} {{ Int(limit) }} {% else %} 10 {% end %}
+         OFFSET {% if defined(page) %}
+                    {% if defined(limit) %} {{ (Int(page) - 1) * Int(limit) }} {% else %} {{ (Int(page) - 1) * 10 }} {% end %}
+                {% elif defined(offset) %}
+                    {{ Int(offset) }}
+                {% else %}
+                    0
+                {% end %}
+
+TYPE endpoint
+
+
