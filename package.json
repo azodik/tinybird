@@ -7,6 +7,7 @@
     "list": "tb list",
     "start": "tb local start",
     "stop": "tb local stop",
+    "login:in": "tb login --host https://tinybird.azodik.com",
     "login:us": "tb login --host https://api.us-east.aws.tinybird.co",
     "login:eu": "tb login --host https://api.eu-west-1.aws.tinybird.co",
     "logout:local": "tb logout",
@@ -16,7 +17,9 @@
     "fixture:apply": "tb datasource append audit_logs --file fixtures/audit_logs.ndjson",
     "deploy:local:force": "tb deploy --allow-destructive-operations",
     "deploy:cloud:force": "tb deploy --cloud --allow-destructive-operations",
-    "tb:update": "tb update"
+    "tb:update": "tb update",
+    "docs:serve": "node serve-docs.js",
+    "docs:open": "open http://localhost:3000"
   },
   "keywords": [
     "tinybird",

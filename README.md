@@ -1,4 +1,8 @@
-# Install Tiny bird CLI
+# Tinybird Audit Logs Project
+
+A comprehensive Tinybird project for managing and analyzing audit logs with real-time analytics capabilities.
+
+## Install Tinybird CLI
 
 ```bash
 # For Mac and Linux
@@ -38,6 +42,43 @@ tb deploy --allow-destructive-operations
 ```bash
 tb deploy --cloud
 ```
+
+## API Documentation
+
+This project includes comprehensive API documentation powered by Spotlight Elements.
+
+### View API Documentation
+
+1. **Start the documentation server:**
+   ```bash
+   npm run docs:serve
+   # or
+   pnpm docs:serve
+   ```
+
+2. **Open in browser:**
+   ```bash
+   npm run docs:open
+   # or manually navigate to http://localhost:3000
+   ```
+
+3. **Alternative: Open directly in browser**
+   - Open `api-docs.html` in your browser
+   - The documentation will load the OpenAPI spec from `openapi.yaml`
+
+### Features
+
+- **Interactive API Explorer**: Test endpoints directly from the documentation
+- **Comprehensive Schema**: Full request/response schemas with examples
+- **Authentication Guide**: Bearer token setup instructions
+- **Parameter Validation**: Detailed parameter descriptions and constraints
+- **Response Examples**: Sample responses for all endpoints
+
+### Documentation Files
+
+- `openapi.yaml` - OpenAPI 3.0 specification
+- `api-docs.html` - HTML documentation with Spotlight Elements
+- `serve-docs.js` - Simple Node.js server for local development
 
 
 # API ENDPOINTS

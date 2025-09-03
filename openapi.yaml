@@ -1,0 +1,659 @@
+openapi: 3.0.3
+info:
+  title: Azodik Tinybird
+  description: |
+    API for managing and querying audit logs with comprehensive filtering and aggregation capabilities.
+    
+    This API provides endpoints to:
+    - Ingest audit log events
+    - Retrieve audit logs with various filters
+    - Count audit logs by action
+    - Calculate Monthly Active Users (MAU)
+    
+    All endpoints require Bearer token authentication.
+  x-logo:
+    url: https://azodik.com/logo.png
+    altText: Azodik Logo
+  version: 1.0.0
+  contact:
+    name: Azodik Support
+    email: support@azodik.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:7181
+    description: Local development server
+  - url: https://api.eu-west-1.aws.tinybird.co
+    description: Eu west server
+  - url: https://api.us-east.aws.tinybird.co
+    description: Us east server
+  - url: https://tinybird.azodik.com
+    description: Azodik India server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /v0/events:
+    post:
+      summary: Ingest Audit Log Event
+      description: |
+        Ingest a new audit log event into the system. The event will be stored in the audit_logs datasource.
+      operationId: ingestAuditLog
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Datasource name for the event
+          schema:
+            type: string
+            default: audit_logs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditLogEvent'
+          text/plain:
+            schema:
+              type: string
+              description: JSON string representation of the audit log event
+      responses:
+        '200':
+          description: Event ingested successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event ingested successfully"
+        '400':
+          description: Bad request - invalid event data
+        '401':
+          description: Unauthorized - invalid or missing token
+        '500':
+          description: Internal server error
+
+  /v0/pipes/get_audit_logs.json:
+    get:
+      summary: Get All Audit Logs
+      description: |
+        Retrieve audit logs with optional filtering by date range, tenant, app, product, and actor.
+        Results are ordered by timestamp in descending order with pagination support.
+      operationId: getAuditLogs
+      parameters:
+        - name: start
+          in: query
+          description: Start date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-01"
+        - name: end
+          in: query
+          description: End date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-07"
+        - name: tenant_id
+          in: query
+          description: Filter by tenant ID
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea59"
+        - name: app_id
+          in: query
+          description: Filter by application ID
+          schema:
+            type: string
+            example: "NA"
+        - name: product_slug
+          in: query
+          description: Filter by product slug
+          schema:
+            type: string
+            example: "authzio"
+        - name: actor_id
+          in: query
+          description: Filter by actor ID
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea591"
+        - name: limit
+          in: query
+          description: Number of records to return (default: 10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 10
+            example: 10
+        - name: page
+          in: query
+          description: Page number for pagination (starts from 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: offset
+          in: query
+          description: Alternative to page - direct offset for pagination
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        '200':
+          description: List of audit logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '400':
+          description: Bad request - invalid parameters
+        '401':
+          description: Unauthorized - invalid or missing token
+        '500':
+          description: Internal server error
+
+  /v0/pipes/get_audit_logs_by_tenant_id.json:
+    get:
+      summary: Get Audit Logs by Tenant ID
+      description: |
+        Retrieve audit logs filtered by tenant ID with additional optional filters.
+        This endpoint requires a tenant_id parameter and provides tenant-specific audit data.
+      operationId: getAuditLogsByTenantId
+      parameters:
+        - name: tenant_id
+          in: query
+          required: true
+          description: Tenant ID to filter by
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea59"
+        - name: start
+          in: query
+          description: Start date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-01"
+        - name: end
+          in: query
+          description: End date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-07"
+        - name: app_id
+          in: query
+          description: Filter by application ID
+          schema:
+            type: string
+            example: "NA"
+        - name: product_slug
+          in: query
+          description: Filter by product slug
+          schema:
+            type: string
+            example: "authzio"
+        - name: actor_id
+          in: query
+          description: Filter by actor ID
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea59"
+        - name: action
+          in: query
+          description: Comma-separated list of actions to filter by
+          schema:
+            type: string
+            example: "USER_LOGIN,USER_SIGNUP"
+        - name: limit
+          in: query
+          description: Number of records to return (default: 10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 10
+            example: 10
+        - name: page
+          in: query
+          description: Page number for pagination (starts from 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: offset
+          in: query
+          description: Alternative to page - direct offset for pagination
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        '200':
+          description: List of audit logs for the specified tenant
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '400':
+          description: Bad request - missing tenant_id or invalid parameters
+        '401':
+          description: Unauthorized - invalid or missing token
+        '500':
+          description: Internal server error
+
+  /v0/pipes/get_audit_logs_by_actor_id.json:
+    get:
+      summary: Get Audit Logs by Actor ID
+      description: |
+        Retrieve audit logs filtered by actor ID with additional optional filters.
+        This endpoint requires an actor_id parameter and provides actor-specific audit data.
+      operationId: getAuditLogsByActorId
+      parameters:
+        - name: actor_id
+          in: query
+          required: true
+          description: Actor ID to filter by
+          schema:
+            type: string
+            example: "250138e1-e7ad-4bc2-bdd8-7494e214345f"
+        - name: start
+          in: query
+          description: Start date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-01"
+        - name: end
+          in: query
+          description: End date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-01"
+        - name: tenant_id
+          in: query
+          description: Filter by tenant ID
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea59"
+        - name: app_id
+          in: query
+          description: Filter by application ID
+          schema:
+            type: string
+            example: "NA"
+        - name: product_slug
+          in: query
+          description: Filter by product slug
+          schema:
+            type: string
+            example: "authzio"
+        - name: action
+          in: query
+          description: Comma-separated list of actions to filter by
+          schema:
+            type: string
+            example: "USER_LOGIN,USER_SIGNUP"
+        - name: limit
+          in: query
+          description: Number of records to return (default: 10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 10
+            example: 10
+        - name: page
+          in: query
+          description: Page number for pagination (starts from 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: offset
+          in: query
+          description: Alternative to page - direct offset for pagination
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        '200':
+          description: List of audit logs for the specified actor
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '400':
+          description: Bad request - missing actor_id or invalid parameters
+        '401':
+          description: Unauthorized - invalid or missing token
+        '500':
+          description: Internal server error
+
+  /v0/pipes/count_audit_logs_by_action.json:
+    get:
+      summary: Count Audit Logs by Action
+      description: |
+        Count audit logs grouped by action with filtering options.
+        Returns a count of each action type for the specified filters.
+      operationId: countAuditLogsByAction
+      parameters:
+        - name: tenant_id
+          in: query
+          required: true
+          description: Tenant ID to filter by
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea59"
+        - name: start
+          in: query
+          description: Start date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-01"
+        - name: end
+          in: query
+          description: End date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2024-06-07"
+        - name: action
+          in: query
+          description: Comma-separated list of actions to filter by
+          schema:
+            type: string
+            example: "USER_LOGIN,USER_SIGNUP"
+        - name: app_id
+          in: query
+          description: Filter by application ID
+          schema:
+            type: string
+            example: "NA"
+        - name: product_slug
+          in: query
+          description: Filter by product slug
+          schema:
+            type: string
+            example: "authzio"
+        - name: actor_id
+          in: query
+          description: Filter by actor ID
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea59"
+      responses:
+        '200':
+          description: Count of audit logs grouped by action
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    action:
+                      type: string
+                      description: The action type
+                      example: "USER_LOGIN"
+                    count:
+                      type: integer
+                      description: Number of occurrences of this action
+                      example: 150
+        '400':
+          description: Bad request - missing tenant_id or invalid parameters
+        '401':
+          description: Unauthorized - invalid or missing token
+        '500':
+          description: Internal server error
+
+  /v0/pipes/count_mau_users.json:
+    get:
+      summary: Count Monthly Active Users (MAU)
+      description: |
+        Count distinct active users (actor_ids) who performed either USER_LOGIN or USER_SIGNUP actions
+        within the specified date range for a given tenant.
+      operationId: countMauUsers
+      parameters:
+        - name: tenant_id
+          in: query
+          required: true
+          description: Tenant ID to filter by
+          schema:
+            type: string
+            example: "faf304f42350c0ba1236f5ccdefbea59"
+        - name: start
+          in: query
+          description: Start date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2025-08-01"
+        - name: end
+          in: query
+          description: End date for filtering (ISO date format)
+          schema:
+            type: string
+            format: date
+            example: "2025-08-31"
+      responses:
+        '200':
+          description: Count of monthly active users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    active_users:
+                      type: integer
+                      description: Number of distinct active users
+                      example: 1250
+        '400':
+          description: Bad request - missing tenant_id or invalid parameters
+        '401':
+          description: Unauthorized - invalid or missing token
+        '500':
+          description: Internal server error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token for authentication. Include your Tinybird token in the Authorization header.
+        Example: `Authorization: Bearer {TB_TOKEN}`
+
+  schemas:
+    AuditLogEvent:
+      type: object
+      required:
+        - id
+        - timestamp
+        - tenant_id
+        - action
+        - actor_id
+        - actor_type
+        - actor_name
+        - targets
+        - description
+        - ip_address
+        - user_agent
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the audit log event
+          example: "a1b2c3d4e5233434"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the event occurred
+          example: "2025-08-13T12:34:56.789Z"
+        tenant_id:
+          type: string
+          description: Identifier for the tenant/organization
+          example: "faf304f42350c0ba1236f5ccdefbea59"
+        app_id:
+          type: string
+          description: Application identifier
+          example: "NA"
+        product_slug:
+          type: string
+          description: Product or service identifier
+          example: "authzio"
+        action:
+          type: string
+          description: Type of action performed
+          enum: ["USER_LOGIN", "USER_SIGNUP", "USER_LOGOUT", "DATA_ACCESS", "DATA_MODIFY", "ADMIN_ACTION"]
+          example: "USER_LOGIN"
+        actor_id:
+          type: string
+          description: Unique identifier for the user/system performing the action
+          example: "faf304f42350c0ba1236f5ccdefbea591"
+        actor_type:
+          type: string
+          description: Type of actor (user, system, service)
+          enum: ["user", "system", "service", "tenant"]
+          example: "tenant"
+        actor_name:
+          type: string
+          description: Human-readable name of the actor
+          example: "John Doe"
+        targets:
+          type: string
+          description: Comma-separated list of target resources affected by the action
+          example: "faf304f42350c0ba1236f5ccdefbea59"
+        description:
+          type: string
+          description: Human-readable description of the action performed
+          example: "User John Doe logged into CRM Suite"
+        ip_address:
+          type: string
+          format: ipv4
+          description: IP address of the client that performed the action
+          example: "203.0.113.45"
+        user_agent:
+          type: string
+          description: User agent string of the client
+          example: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+        meta_data:
+          type: string
+          description: Additional metadata in JSON format
+          example: "{}"
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the audit log event
+          example: "a1b2c3d4e5233434"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the event occurred
+          example: "2025-08-13T12:34:56.789Z"
+        action:
+          type: string
+          description: Type of action performed
+          example: "USER_LOGIN"
+        actor_id:
+          type: string
+          description: Unique identifier for the user/system performing the action
+          example: "faf304f42350c0ba1236f5ccdefbea591"
+        actor_type:
+          type: string
+          description: Type of actor (user, system, service)
+          example: "tenant"
+        actor_name:
+          type: string
+          description: Human-readable name of the actor
+          example: "John Doe"
+        targets:
+          type: string
+          description: Comma-separated list of target resources affected by the action
+          example: "faf304f42350c0ba1236f5ccdefbea59"
+        description:
+          type: string
+          description: Human-readable description of the action performed
+          example: "User John Doe logged into CRM Suite"
+        ip_address:
+          type: string
+          format: ipv4
+          description: IP address of the client that performed the action
+          example: "203.0.113.45"
+        user_agent:
+          type: string
+          description: User agent string of the client
+          example: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+        tenant_id:
+          type: string
+          description: Identifier for the tenant/organization
+          example: "faf304f42350c0ba1236f5ccdefbea59"
+        app_id:
+          type: string
+          description: Application identifier
+          example: "NA"
+        product_slug:
+          type: string
+          description: Product or service identifier
+          example: "authzio"
+        meta_data:
+          type: string
+          description: Additional metadata in JSON format
+          example: "{}"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid tenant_id parameter"
+        code:
+          type: string
+          description: Error code
+          example: "INVALID_PARAMETER"
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+          example: "2025-08-13T12:34:56.789Z"
+
+tags:
+  - name: Audit Logs
+    description: Operations for managing and querying audit log events
+  - name: Analytics
+    description: Aggregation and counting operations for audit data
+  - name: Ingestion
+    description: Operations for ingesting new audit log events
